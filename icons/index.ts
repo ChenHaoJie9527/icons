@@ -1,5 +1,6 @@
 import { AArrowDownIcon } from "@/icons/a-arrow-down";
 import { ApiAntDesignIcon } from "@/icons/api";
+import { AccountBookIcon } from "@/icons/account-book";
 import { AArrowUpIcon } from "@/icons/a-arrow-up";
 import { AccessibilityIcon } from "@/icons/accessibility";
 import { ActivityIcon } from "@/icons/activity";
@@ -601,6 +602,11 @@ const ICON_LIST: IconListItem[] = [
     name: "corner-right-up",
     icon: CornerRightUpIcon,
     keywords: ["corner", "right", "up", "arrow"],
+  },
+  {
+    name: "account-book",
+    icon: AccountBookIcon,
+    keywords: ["account", "book", "document", "notebook"],
   },
   {
     name: "corner-right-down",
