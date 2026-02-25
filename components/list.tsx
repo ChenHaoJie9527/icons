@@ -51,28 +51,29 @@ const IconItem = ({
 const IconsList = ({ icons }: Props) => {
   const [searchValue, setSearchValue] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
-  const deferredSearchValue = useDeferredValue(searchValue);
+  const deferredSearchValue = useDeferredValue(searchValue); // 使用 useDeferredValue 来延迟搜索值的更新
 
   const fuse = useMemo(
     () =>
       new Fuse(icons, {
         keys: [
-          { name: "name", weight: 3 },
-          { name: "keywords", weight: 2 },
+          { name: "name", weight: 3 }, // 名称权重更高
+          { name: "keywords", weight: 2 }, // 关键词权重较低
         ],
-        threshold: 0.3,
-        ignoreLocation: true,
-        findAllMatches: true,
-        isCaseSensitive: false,
-        minMatchCharLength: 2,
+        threshold: 0.3, // 匹配度阈值（0完全匹配，1匹配所有）
+        ignoreLocation: true, // 不考虑匹配位置
+        findAllMatches: true, // 找出所有匹配
+        isCaseSensitive: false, // 不区分大小写
+        minMatchCharLength: 2, // 至少匹配2个字符
       }),
     [icons]
   );
 
+  // 延迟搜索
   const filteredIcons = useMemo(() => {
     if (!deferredSearchValue.trim()) return icons;
-    return fuse.search(deferredSearchValue).map((result) => result.item);
-  }, [fuse, icons, deferredSearchValue]);
+    return fuse.search(deferredSearchValue).map((result) => result.item); // 使用 fuse.search 进行搜索
+  }, [fuse, icons, deferredSearchValue]); // 依赖项
 
   return (
     <div className="mb-20 w-full">

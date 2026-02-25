@@ -6,7 +6,6 @@ import { LINK } from "@/constants";
 
 const Home = () => {
   const icons = getIcons();
-
   return (
     <section className="mx-auto mt-[60px] flex w-full flex-col items-center justify-center">
       <h1 className="px-4 text-center font-sans text-[32px] min-[640px]:text-[42px]">

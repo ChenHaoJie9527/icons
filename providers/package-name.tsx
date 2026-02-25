@@ -1,10 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useState, use } from "react";
 
 import { PACKAGE_MANAGER } from "@/constants";
 
-type PackageManager = (typeof PACKAGE_MANAGER)[keyof typeof PACKAGE_MANAGER];
+type PackageNameMap = keyof typeof PACKAGE_MANAGER;
+
+type PackageManager = (typeof PACKAGE_MANAGER)[PackageNameMap];
 
 type PackageNameContextType = {
   packageName: PackageManager;
@@ -31,7 +33,7 @@ const PackageNameProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 const usePackageNameContext = () => {
-  const context = useContext(PackageNameContext);
+  const context = use(PackageNameContext);
 
   if (!context) {
     throw new Error(

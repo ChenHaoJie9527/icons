@@ -20,7 +20,7 @@ const VARIANTS: Variants = {
   normal: {
     opacity: 1,
     pathLength: 1,
-    pathOffset: 0,
+    pathOffset: 0, // 偏移量 0 表示从 1 开始画，1 表示从 0 开始画
     transition: {
       duration: 0.4,
       opacity: { duration: 0.1 },
@@ -29,10 +29,10 @@ const VARIANTS: Variants = {
   animate: {
     opacity: [0, 1],
     pathLength: [0, 1],
-    pathOffset: [1, 0],
+    pathOffset: [1, 0], // 线条从左到右画完
     transition: {
       duration: 0.6,
-      ease: "linear",
+      ease: "easeInOut",
       opacity: { duration: 0.1 },
     },
   },
@@ -94,6 +94,8 @@ const ActivityIcon = forwardRef<ActivityIconHandle, ActivityIconProps>(
         >
           <motion.path
             animate={controls}
+            // d="M22 12h-2.48 ... H2" 这条 path 的命令顺序，决定了“从哪儿开始画到哪儿结束”。
+            // 在这条路径里，起点在右边（靠 22 那边），终点在左边（靠 2 那边），所以它的“自然方向”就是从右到左。
             d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"
             initial="normal"
             variants={VARIANTS}

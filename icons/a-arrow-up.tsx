@@ -1,9 +1,9 @@
 "use client";
 
-import type { Variants } from "motion/react";
 import { motion, useAnimation } from "motion/react";
 import type { HTMLAttributes } from "react";
 import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
+import { fade, variants, scale, transition, slide } from "@/lib/build-variants";
 
 import { cn } from "@/lib/utils";
 
@@ -16,23 +16,17 @@ interface AArrowUpIconProps extends HTMLAttributes<HTMLDivElement> {
   size?: number;
 }
 
-const LETTER_VARIANTS: Variants = {
-  normal: { opacity: 1, scale: 1 },
-  animate: {
-    opacity: [0, 1],
-    scale: [0.8, 1],
-    transition: { duration: 0.3 },
-  },
-};
+const LETTER_VARIANTS = variants(
+  fade({ from: 0, to: 1 }),
+  scale({ from: 0.8, to: 1 }),
+  transition({ duration: 0.3 })
+);
 
-const ARROW_VARIANTS: Variants = {
-  normal: { opacity: 1, y: 0 },
-  animate: {
-    opacity: [0, 1],
-    y: [10, 0],
-    transition: { duration: 0.3, delay: 0.2 },
-  },
-};
+const ARROW_VARIANTS = variants(
+  fade({ from: 0, to: 1 }),
+  slide({ y: -10 }),
+  transition({ duration: 0.3, delay: 0.2 })
+);
 
 const AArrowUpIcon = forwardRef<AArrowUpIconHandle, AArrowUpIconProps>(
   ({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {

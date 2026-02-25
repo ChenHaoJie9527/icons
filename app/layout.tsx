@@ -1,5 +1,5 @@
 import type { Viewport } from "next";
-import localFont from "next/font/local";
+// import localFont from "next/font/local";
 
 import "./globals.css";
 import { CircleXIcon, TriangleAlertIcon } from "lucide-react";
@@ -15,18 +15,20 @@ import { ThemeProvider } from "@/providers/theme";
 import { JsonLdScripts } from "@/seo/json-ld";
 import { baseMetadata } from "@/seo/metadata";
 
-const andaleMonoLocal = localFont({
-  src: "../fonts/ANDALEMO.woff",
-  variable: "--font-mono",
-  display: "swap",
-});
+// 注释掉本地字体，避免在开发环境中因字体文件不存在而报错
+// 在生产环境部署时，如果需要使用自定义字体，请配置相应的环境变量
+// const andaleMonoLocal = localFont({
+//   src: "../fonts/ANDALEMO.woff",
+//   variable: "--font-mono",
+//   display: "swap",
+// });
 
-const gtCinetypeLocal = localFont({
-  src: "../fonts/GT-Cinetype-Regular.woff",
-  variable: "--font-sans",
-  display: "swap",
-  weight: "400",
-});
+// const gtCinetypeLocal = localFont({
+//   src: "../fonts/GT-Cinetype-Regular.woff",
+//   variable: "--font-sans",
+//   display: "swap",
+//   weight: "400",
+// });
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
@@ -40,12 +42,13 @@ const geist = Geist({
   display: "swap",
 });
 
-const useProductionFonts =
-  process.env.NODE_ENV === "production" ||
-  process.env.USE_PRODUCTION_FONTS === "true";
+// 开发环境使用 Google Fonts
+// const useProductionFonts =
+//   process.env.NODE_ENV === "production" ||
+//   process.env.USE_PRODUCTION_FONTS === "true";
 
-const andaleMono = useProductionFonts ? andaleMonoLocal : geistMono;
-const gtCinetype = useProductionFonts ? gtCinetypeLocal : geist;
+const andaleMono = geistMono;
+const gtCinetype = geist;
 
 export const metadata = baseMetadata;
 

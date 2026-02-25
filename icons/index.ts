@@ -1,4 +1,5 @@
 import { AArrowDownIcon } from "@/icons/a-arrow-down";
+import { ApiAntDesignIcon } from "@/icons/api";
 import { AArrowUpIcon } from "@/icons/a-arrow-up";
 import { AccessibilityIcon } from "@/icons/accessibility";
 import { ActivityIcon } from "@/icons/activity";
@@ -382,6 +383,13 @@ type IconListItem = {
   keywords: string[];
 };
 
+/**
+ * @description 图标列表
+ * @type {IconListItem[]}
+ * @property {string} name - 图标名称
+ * @property {React.ElementType} icon - 图标组件
+ * @property {string[]} keywords - 图标关键词
+ */
 const ICON_LIST: IconListItem[] = [
   {
     name: "graduation-cap",
@@ -2157,7 +2165,11 @@ const ICON_LIST: IconListItem[] = [
     icon: AArrowDownIcon,
     keywords: ["arrow", "down", "a"],
   },
-
+  {
+    name: "api-ant-design",
+    icon: ApiAntDesignIcon,
+    keywords: ["api", "ant design", "ant"],
+  },
   {
     name: "circle-dashed",
     icon: CircleDashedIcon,
