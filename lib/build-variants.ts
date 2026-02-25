@@ -36,6 +36,17 @@ type SlideConfig = {
 };
 
 /**
+ * @description 路径绘制配置（SVG path 描边动画）
+ * @type {DrawPathConfig}
+ * @property {{ from?: number; to?: number }} pathLength - 路径长度（0 = 不可见，1 = 完整）
+ * @property {{ from?: number; to?: number }} pathOffset - 路径偏移（0 = 正常位置，1 = 完全偏移）
+ */
+type DrawPathConfig = {
+  pathLength?: { from?: number; to?: number };
+  pathOffset?: { from?: number; to?: number };
+};
+
+/**
  * @description 过渡配置
  * @type {TransitionConfig}
  * @property {number} duration - 持续时间
@@ -65,12 +76,14 @@ type CommonConfig = {
  * @property {FadeConfig} fade - 淡入淡出配置
  * @property {ScaleConfig} scale - 缩放配置
  * @property {SlideConfig | null} slide - 平移配置
+ * @property {DrawPathConfig | null} drawPath - 路径描边动画配置
  * @property {CommonConfig} common - 通用配置
  */
 export type VariantConfig = {
   fade?: FadeConfig;
   scale?: ScaleConfig;
   slide?: SlideConfig | null;
+  drawPath?: DrawPathConfig | null;
   common?: CommonConfig;
 };
 
@@ -89,7 +102,8 @@ export type VariantStep = (config: VariantConfig) => VariantConfig;
  * @returns {Variants} - 变体
  */
 const buildVariants = (config: VariantConfig): Variants => {
-  const { common = {}, fade = {}, scale = {}, slide = null } = config;
+  const { common = {}, fade = {}, scale = {}, slide = null, drawPath = null } =
+    config;
 
   const duration = common.transition?.duration ?? common.duration ?? 0.3;
   const fromOpacity = fade.from ?? 0;
@@ -101,18 +115,32 @@ const buildVariants = (config: VariantConfig): Variants => {
   const delay = common.transition?.delay ?? slide?.delay ?? 0;
   const ease = common.transition?.ease;
 
+  const pathLengthFrom = drawPath?.pathLength?.from ?? 0;
+  const pathLengthTo = drawPath?.pathLength?.to ?? 1;
+  const pathOffsetFrom = drawPath?.pathOffset?.from ?? 1;
+  const pathOffsetTo = drawPath?.pathOffset?.to ?? 0;
+
   return {
     normal: {
       opacity: toOpacity,
       scale: toScale,
       x: 0,
       y: 0,
+      ...(drawPath
+        ? { pathLength: pathLengthTo, pathOffset: pathOffsetTo }
+        : {}),
     },
     animate: {
       opacity: [fromOpacity, toOpacity],
       scale: [fromScale, toScale],
       x: slideX ? [-slideX, 0] : 0,
       y: slideY ? [-slideY, 0] : 0,
+      ...(drawPath
+        ? {
+            pathLength: [pathLengthFrom, pathLengthTo],
+            pathOffset: [pathOffsetFrom, pathOffsetTo],
+          }
+        : {}),
       transition: {
         duration,
         delay,
@@ -216,4 +244,30 @@ const transition =
     },
   });
 
-export { variants, fade, scale, slide, duration, transition };
+/**
+ * @description SVG 路径描边动画步骤函数
+ *   - pathLength: 控制路径可见长度（0 = 不可见，1 = 完整路径）
+ *   - pathOffset: 控制路径起点偏移（0 = 正常，1 = 完全偏移，与 pathLength 配合实现描边方向）
+ * @type {drawPath}
+ * @param {DrawPathConfig} opts - 路径描边配置
+ * @returns {VariantStep} - 步骤函数
+ *
+ * @example
+ * // 从右到左描边（默认行为）
+ * variants(fade(), drawPath(), transition({ duration: 0.6, ease: "easeInOut" }))
+ *
+ * @example
+ * // 从左到右描边（反向）
+ * variants(drawPath({ pathOffset: { from: -1, to: 0 } }))
+ */
+const drawPath =
+  (opts: DrawPathConfig = {}): VariantStep =>
+  (cfg) => ({
+    ...cfg,
+    drawPath: {
+      ...(cfg.drawPath ?? {}),
+      ...opts,
+    },
+  });
+
+export { variants, fade, scale, slide, duration, transition, drawPath };

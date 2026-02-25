@@ -1,6 +1,5 @@
 "use client";
 
-import type { Variants } from "motion/react";
 import { motion } from "motion/react";
 import type { HTMLAttributes } from "react";
 import { forwardRef } from "react";
@@ -8,6 +7,8 @@ import {
   useIconHoverAnimation,
   type IconAnimationHandle,
 } from "@/hooks/use-icon-hover-animation";
+
+import { variants, fade, drawPath, transition } from "@/lib/build-variants";
 
 import { cn } from "@/lib/utils";
 
@@ -17,27 +18,11 @@ interface ActivityIconProps extends HTMLAttributes<HTMLDivElement> {
   size?: number;
 }
 
-const VARIANTS: Variants = {
-  normal: {
-    opacity: 1,
-    pathLength: 1,
-    pathOffset: 0, // 偏移量 0 表示从 1 开始画，1 表示从 0 开始画
-    transition: {
-      duration: 0.4,
-      opacity: { duration: 0.1 },
-    },
-  },
-  animate: {
-    opacity: [0, 1],
-    pathLength: [0, 1],
-    pathOffset: [1, 0], // 线条从左到右画完
-    transition: {
-      duration: 0.6,
-      ease: "easeInOut",
-      opacity: { duration: 0.1 },
-    },
-  },
-};
+const VARIANTS = variants(
+  fade(),
+  drawPath(),
+  transition({ duration: 0.6, ease: "easeInOut" })
+);
 
 const ActivityIcon = forwardRef<ActivityIconHandle, ActivityIconProps>(
   ({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {

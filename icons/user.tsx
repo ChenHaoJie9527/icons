@@ -91,14 +91,6 @@ const UserIcon = forwardRef<UserIconHandle, UserIconProps>(
           width={size}
           xmlns="http://www.w3.org/2000/svg"
         >
-          <motion.circle
-            animate={controls}
-            cx="12"
-            cy="8"
-            r="5"
-            variants={CIRCLE_VARIANT}
-          />
-
           <motion.path
             animate={controls}
             d="M20 21a8 8 0 0 0-16 0"
@@ -107,6 +99,13 @@ const UserIcon = forwardRef<UserIconHandle, UserIconProps>(
               duration: 0.4,
             }}
             variants={PATH_VARIANT}
+          />
+          <motion.circle
+            animate={controls}
+            cx="12"
+            cy="8"
+            r="5"
+            variants={CIRCLE_VARIANT}
           />
         </svg>
       </div>
