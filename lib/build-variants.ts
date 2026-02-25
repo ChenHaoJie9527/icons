@@ -123,8 +123,7 @@ const buildVariants = (config: VariantConfig): Variants => {
 };
 
 /**
- * 把若干个步骤函数组合成一个管道，并返回最终 Variants
- * @type {variants}
+ * @description 把若干个步骤函数组合成一个管道，并返回最终 Variants
  * @param {VariantStep[]} steps - 步骤函数
  * @returns {Variants} - 变体
  */
