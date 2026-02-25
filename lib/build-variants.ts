@@ -47,6 +47,19 @@ type DrawPathConfig = {
 };
 
 /**
+ * @description X 轴缩放配置（填充型形状的展开动画）
+ * @type {ScaleXConfig}
+ * @property {number} from - 起始缩放值（默认 0）
+ * @property {number} to - 结束缩放值（默认 1）
+ * @property {"left" | "center" | "right"} origin - 展开原点（默认 "left"）
+ */
+type ScaleXConfig = {
+  from?: number;
+  to?: number;
+  origin?: "left" | "center" | "right";
+};
+
+/**
  * @description 过渡配置
  * @type {TransitionConfig}
  * @property {number} duration - 持续时间
@@ -82,6 +95,7 @@ type CommonConfig = {
 export type VariantConfig = {
   fade?: FadeConfig;
   scale?: ScaleConfig;
+  scaleX?: ScaleXConfig | null;
   slide?: SlideConfig | null;
   drawPath?: DrawPathConfig | null;
   common?: CommonConfig;
@@ -101,9 +115,64 @@ export type VariantStep = (config: VariantConfig) => VariantConfig;
  * @param config - 配置
  * @returns {Variants} - 变体
  */
+const ORIGIN_X_MAP = { left: 0, center: 0.5, right: 1 } as const;
+
+/**
+ * @description 构建路径描边属性
+ * @type {buildDrawPathProps}
+ * @param {DrawPathConfig | null} drawPath - 路径描边配置
+ * @returns {Object} - 路径描边属性
+ * @property {Object} normal - 正常状态属性
+ * @property {Object} animate - 动画状态属性
+ * @property {number} normal.pathLength - 路径长度
+ * @property {number} normal.pathOffset - 路径偏移
+ * @property {number[]} animate.pathLength - 路径长度动画
+ * @property {number[]} animate.pathOffset - 路径偏移动画
+ */
+const buildDrawPathProps = (drawPath: DrawPathConfig | null) => {
+  if (!drawPath) return { normal: {}, animate: {} };
+  const from = drawPath.pathLength?.from ?? 0;
+  const to = drawPath.pathLength?.to ?? 1;
+  const offsetFrom = drawPath.pathOffset?.from ?? 1;
+  const offsetTo = drawPath.pathOffset?.to ?? 0;
+  return {
+    normal: { pathLength: to, pathOffset: offsetTo },
+    animate: { pathLength: [from, to], pathOffset: [offsetFrom, offsetTo] },
+  };
+};
+
+/**
+ * @description 构建 X 轴缩放属性
+ * @type {buildScaleXProps}
+ * @param {ScaleXConfig | null} scaleX - X 轴缩放配置
+ * @returns {Object} - X 轴缩放属性
+ * @property {Object} normal - 正常状态属性
+ * @property {Object} animate - 动画状态属性
+ * @property {number} normal.scaleX - X 轴缩放
+ * @property {number} normal.originX - X 轴原点
+ * @property {number[]} animate.scaleX - X 轴缩放动画
+ * @property {number} animate.originX - X 轴原点动画
+ */
+const buildScaleXProps = (scaleX: ScaleXConfig | null) => {
+  if (!scaleX) return { normal: {}, animate: {} };
+  const from = scaleX.from ?? 0;
+  const to = scaleX.to ?? 1;
+  const originX = ORIGIN_X_MAP[scaleX.origin ?? "left"];
+  return {
+    normal: { scaleX: to, originX },
+    animate: { scaleX: [from, to], originX },
+  };
+};
+
 const buildVariants = (config: VariantConfig): Variants => {
-  const { common = {}, fade = {}, scale = {}, slide = null, drawPath = null } =
-    config;
+  const {
+    common = {},
+    fade = {},
+    scale = {},
+    scaleX = null,
+    slide = null,
+    drawPath = null,
+  } = config;
 
   const duration = common.transition?.duration ?? common.duration ?? 0.3;
   const fromOpacity = fade.from ?? 0;
@@ -115,10 +184,9 @@ const buildVariants = (config: VariantConfig): Variants => {
   const delay = common.transition?.delay ?? slide?.delay ?? 0;
   const ease = common.transition?.ease;
 
-  const pathLengthFrom = drawPath?.pathLength?.from ?? 0;
-  const pathLengthTo = drawPath?.pathLength?.to ?? 1;
-  const pathOffsetFrom = drawPath?.pathOffset?.from ?? 1;
-  const pathOffsetTo = drawPath?.pathOffset?.to ?? 0;
+  // 构建路径描边和 X 轴缩放属性
+  const dp = buildDrawPathProps(drawPath);
+  const sx = buildScaleXProps(scaleX);
 
   return {
     normal: {
@@ -126,21 +194,16 @@ const buildVariants = (config: VariantConfig): Variants => {
       scale: toScale,
       x: 0,
       y: 0,
-      ...(drawPath
-        ? { pathLength: pathLengthTo, pathOffset: pathOffsetTo }
-        : {}),
+      ...dp.normal,
+      ...sx.normal,
     },
     animate: {
       opacity: [fromOpacity, toOpacity],
       scale: [fromScale, toScale],
       x: slideX ? [-slideX, 0] : 0,
       y: slideY ? [-slideY, 0] : 0,
-      ...(drawPath
-        ? {
-            pathLength: [pathLengthFrom, pathLengthTo],
-            pathOffset: [pathOffsetFrom, pathOffsetTo],
-          }
-        : {}),
+      ...dp.animate,
+      ...sx.animate,
       transition: {
         duration,
         delay,
@@ -245,6 +308,31 @@ const transition =
   });
 
 /**
+ * @description X 轴缩放步骤函数（适用于填充型形状的展开动画）
+ *   - 通过 originX 控制展开原点，无需在元素上手动设置 transformOrigin
+ * @type {scaleX}
+ * @param {ScaleXConfig} opts - X 轴缩放配置
+ * @returns {VariantStep} - 步骤函数
+ *
+ * @example
+ * // 从左到右展开（默认）
+ * variants(fade(), scaleX(), transition({ duration: 0.4, ease: "easeInOut" }))
+ *
+ * @example
+ * // 从右到左收缩再展开
+ * variants(scaleX({ origin: "right" }))
+ */
+const scaleX =
+  (opts: ScaleXConfig = {}): VariantStep =>
+  (cfg) => ({
+    ...cfg,
+    scaleX: {
+      ...(cfg.scaleX ?? {}),
+      ...opts,
+    },
+  });
+
+/**
  * @description SVG 路径描边动画步骤函数
  *   - pathLength: 控制路径可见长度（0 = 不可见，1 = 完整路径）
  *   - pathOffset: 控制路径起点偏移（0 = 正常，1 = 完全偏移，与 pathLength 配合实现描边方向）
@@ -270,4 +358,4 @@ const drawPath =
     },
   });
 
-export { variants, fade, scale, slide, duration, transition, drawPath };
+export { variants, fade, scale, scaleX, slide, duration, transition, drawPath };

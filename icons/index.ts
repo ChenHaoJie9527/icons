@@ -377,6 +377,7 @@ import { HandMetalIcon } from "./hand-metal";
 import { HeartHandshakeIcon } from "./heart-handshake";
 import { TruckIcon } from "./truck";
 import { GraduationCapIcon } from "./graduation-cap";
+import { AliyunIcon } from "./aliyun";
 
 type IconListItem = {
   name: string;
@@ -607,6 +608,11 @@ const ICON_LIST: IconListItem[] = [
     name: "account-book",
     icon: AccountBookIcon,
     keywords: ["account", "book", "document", "notebook"],
+  },
+  {
+    name: "aliyun",
+    icon: AliyunIcon,
+    keywords: ["aliyun", "cloud", "computing", "database"],
   },
   {
     name: "corner-right-down",
