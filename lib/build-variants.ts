@@ -60,16 +60,26 @@ type ScaleXConfig = {
 };
 
 /**
- * @description 过渡配置
+ * @description 过渡配置（支持 tween 和 spring 两种模式）
  * @type {TransitionConfig}
- * @property {number} duration - 持续时间
+ * @property {"tween" | "spring"} type - 过渡类型（默认 tween）
+ * @property {number} duration - 持续时间（tween 专用）
  * @property {number} delay - 延迟
- * @property {string | number[]} ease - 缓动
+ * @property {Easing} ease - 缓动（tween 专用）
+ * @property {number} stiffness - 弹簧刚度（spring 专用，默认 260）
+ * @property {number} damping - 阻尼（spring 专用，默认 20）
+ * @property {number} mass - 质量（spring 专用）
+ * @property {number} bounce - 弹跳量 0~1（spring 专用）
  */
 type TransitionConfig = {
+  type?: "tween" | "spring";
   duration?: number;
   delay?: number;
   ease?: Easing | Easing[];
+  stiffness?: number;
+  damping?: number;
+  mass?: number;
+  bounce?: number;
 };
 
 /**
@@ -174,17 +184,32 @@ const buildVariants = (config: VariantConfig): Variants => {
     drawPath = null,
   } = config;
 
-  const duration = common.transition?.duration ?? common.duration ?? 0.3;
+  const t = common.transition ?? {};
+  const isSpring = t.type === "spring";
+  const duration = t.duration ?? common.duration ?? 0.3;
   const fromOpacity = fade.from ?? 0;
   const toOpacity = fade.to ?? 1;
   const fromScale = scale.from ?? 1;
   const toScale = scale.to ?? 1;
   const slideX = slide?.x ?? 0;
   const slideY = slide?.y ?? 0;
-  const delay = common.transition?.delay ?? slide?.delay ?? 0;
-  const ease = common.transition?.ease;
+  const delay = t.delay ?? slide?.delay ?? 0;
 
-  // 构建路径描边和 X 轴缩放属性
+  const transitionProps = isSpring
+    ? {
+        type: "spring" as const,
+        stiffness: t.stiffness ?? 260,
+        damping: t.damping ?? 20,
+        ...(t.mass !== undefined ? { mass: t.mass } : {}),
+        ...(t.bounce !== undefined ? { bounce: t.bounce } : {}),
+        delay,
+      }
+    : {
+        duration,
+        delay,
+        ...(t.ease ? { ease: t.ease } : {}),
+      };
+
   const dp = buildDrawPathProps(drawPath);
   const sx = buildScaleXProps(scaleX);
 
@@ -204,11 +229,7 @@ const buildVariants = (config: VariantConfig): Variants => {
       y: slideY ? [-slideY, 0] : 0,
       ...dp.animate,
       ...sx.animate,
-      transition: {
-        duration,
-        delay,
-        ...(ease ? { ease } : {}),
-      },
+      transition: transitionProps,
     },
   };
 };
@@ -358,4 +379,47 @@ const drawPath =
     },
   });
 
-export { variants, fade, scale, scaleX, slide, duration, transition, drawPath };
+/**
+ * @description 弹簧过渡步骤函数（type: "spring" 的语法糖）
+ * @param {object} opts - stiffness / damping / mass / bounce / delay
+ * @returns {VariantStep}
+ *
+ * @example
+ * // 高刚度、低阻尼 → 弹跳感强
+ * variants(fade(), slide({ x: 40 }), spring({ stiffness: 400, damping: 10 }))
+ *
+ * @example
+ * // 默认弹簧参数（stiffness: 260, damping: 20）
+ * variants(fade(), slide({ x: 20 }), spring())
+ */
+const spring =
+  (
+    opts: Pick<
+      // Pick 类型操作符，从 TransitionConfig 类型中选择指定的属性
+      TransitionConfig,
+      "stiffness" | "damping" | "mass" | "bounce" | "delay"
+    > = {}
+  ): VariantStep =>
+  (cfg) => ({
+    ...cfg,
+    common: {
+      ...(cfg.common ?? {}),
+      transition: {
+        ...(cfg.common?.transition ?? {}),
+        type: "spring",
+        ...opts,
+      },
+    },
+  });
+
+export {
+  variants,
+  fade,
+  scale,
+  scaleX,
+  slide,
+  duration,
+  transition,
+  spring,
+  drawPath,
+};
