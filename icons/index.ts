@@ -378,7 +378,7 @@ import { HeartHandshakeIcon } from "./heart-handshake";
 import { TruckIcon } from "./truck";
 import { GraduationCapIcon } from "./graduation-cap";
 import { AliyunIcon } from "./aliyun";
-
+import { CarryOutIcon } from "./carry-out";
 type IconListItem = {
   name: string;
   icon: React.ElementType;
@@ -613,6 +613,18 @@ const ICON_LIST: IconListItem[] = [
     name: "aliyun",
     icon: AliyunIcon,
     keywords: ["aliyun", "cloud", "computing", "database"],
+  },
+  {
+    name: "carry-out",
+    icon: CarryOutIcon,
+    keywords: [
+      "carry out",
+      "delivery",
+      "shipping",
+      "haulage",
+      "lorry",
+      "transportation",
+    ],
   },
   {
     name: "corner-right-down",
