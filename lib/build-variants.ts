@@ -103,6 +103,7 @@ type CommonConfig = {
  * @property {CommonConfig} common - 通用配置
  */
 export type VariantConfig = {
+  mode?: "enter" | "hover";
   fade?: FadeConfig;
   scale?: ScaleConfig;
   scaleX?: ScaleXConfig | null;
@@ -174,28 +175,20 @@ const buildScaleXProps = (scaleX: ScaleXConfig | null) => {
   };
 };
 
-const buildVariants = (config: VariantConfig): Variants => {
-  const {
-    common = {},
-    fade = {},
-    scale = {},
-    scaleX = null,
-    slide = null,
-    drawPath = null,
-  } = config;
-
-  const t = common.transition ?? {};
-  const isSpring = t.type === "spring";
-  const duration = t.duration ?? common.duration ?? 0.3;
-  const fromOpacity = fade.from ?? 0;
-  const toOpacity = fade.to ?? 1;
-  const fromScale = scale.from ?? 1;
-  const toScale = scale.to ?? 1;
-  const slideX = slide?.x ?? 0;
-  const slideY = slide?.y ?? 0;
-  const delay = t.delay ?? slide?.delay ?? 0;
-
-  const transitionProps = isSpring
+/**
+ * @description 解析过渡配置
+ * @type {resolveTransition}
+ * @param t - 过渡配置
+ * @param duration - 持续时间
+ * @param delay - 延迟
+ * @returns {Object} - 过渡配置
+ */
+const resolveTransition = (
+  t: TransitionConfig,
+  duration: number,
+  delay: number
+) =>
+  t.type === "spring"
     ? {
         type: "spring" as const,
         stiffness: t.stiffness ?? 260,
@@ -204,38 +197,93 @@ const buildVariants = (config: VariantConfig): Variants => {
         ...(t.bounce !== undefined ? { bounce: t.bounce } : {}),
         delay,
       }
-    : {
-        duration,
-        delay,
-        ...(t.ease ? { ease: t.ease } : {}),
-      };
+    : { duration, delay, ...(t.ease ? { ease: t.ease } : {}) };
 
+/**
+ * @description 构建入场动画变体
+ * @type {buildEnterVariants}
+ * @param {VariantConfig} config - 配置
+ * @returns {Variants} - 变体
+ */
+const buildEnterVariants = (config: VariantConfig): Variants => {
+  const {
+    common = {},
+    fade,
+    scale = {},
+    scaleX = null,
+    slide = null,
+    drawPath = null,
+  } = config;
+
+  const hasFade = fade !== undefined;
+  const t = common.transition ?? {};
+  const duration = t.duration ?? common.duration ?? 0.3;
+  const delay = t.delay ?? slide?.delay ?? 0;
   const dp = buildDrawPathProps(drawPath);
   const sx = buildScaleXProps(scaleX);
+  const slideX = slide?.x ?? 0;
+  const slideY = slide?.y ?? 0;
 
   return {
     normal: {
-      opacity: toOpacity,
-      scale: toScale,
+      ...(hasFade ? { opacity: fade?.to ?? 1 } : {}),
+      scale: scale.to ?? 1,
       x: 0,
       y: 0,
       ...dp.normal,
       ...sx.normal,
     },
     animate: {
-      opacity: [fromOpacity, toOpacity],
-      scale: [fromScale, toScale],
+      ...(hasFade ? { opacity: [fade?.from ?? 0, fade?.to ?? 1] } : {}),
+      scale: [scale.from ?? 1, scale.to ?? 1],
       x: slideX ? [-slideX, 0] : 0,
       y: slideY ? [-slideY, 0] : 0,
       ...dp.animate,
       ...sx.animate,
-      transition: transitionProps,
+      transition: resolveTransition(t, duration, delay),
+    },
+  };
+};
+
+const buildHoverVariants = (config: VariantConfig): Variants => {
+  const { common = {}, fade, scale = {}, slide = null } = config;
+
+  const hasFade = fade !== undefined;
+  const t = common.transition ?? {};
+  const duration = t.duration ?? common.duration ?? 0.3;
+  const delay = t.delay ?? slide?.delay ?? 0;
+
+  return {
+    normal: {
+      ...(hasFade ? { opacity: fade?.from ?? 1 } : {}),
+      scale: scale.from ?? 1,
+      x: 0,
+      y: 0,
+    },
+    animate: {
+      ...(hasFade ? { opacity: fade?.to ?? 1 } : {}),
+      scale: scale.to ?? 1,
+      x: slide?.x ?? 0,
+      y: slide?.y ?? 0,
+      transition: resolveTransition(t, duration, delay),
     },
   };
 };
 
 /**
+ * @description 构建变体
+ * @type {buildVariants}
+ * @param {VariantConfig} config - 配置
+ * @returns {Variants} - 变体
+ */
+const buildVariants = (config: VariantConfig): Variants =>
+  config.mode === "hover"
+    ? buildHoverVariants(config)
+    : buildEnterVariants(config);
+
+/**
  * @description 把若干个步骤函数组合成一个管道，并返回最终 Variants
+ *   默认 mode 为 "enter"（入场动画），传入 hover() 后切换为 "hover"（悬停动画）
  * @param {VariantStep[]} steps - 步骤函数
  * @returns {Variants} - 变体
  */
@@ -244,6 +292,22 @@ const variants = (...steps: VariantStep[]): Variants => {
 
   return buildVariants(config);
 };
+
+/**
+ * @description 切换为悬停动画模式
+ *   - scale({ from, to })：from = 静止缩放，to = 悬停目标缩放
+ *   - slide({ x, y })：悬停时移动到的目标坐标（非入场偏移量）
+ *   - fade({ from, to })：from = 静止透明度，to = 悬停目标透明度
+ *
+ * @example
+ * variants(
+ *   hover(),
+ *   scale({ from: 1, to: 0.8 }),
+ *   slide({ x: 3, y: -3 }),
+ *   transition({ duration: 0.5, ease: "easeInOut" })
+ * )
+ */
+const hover = (): VariantStep => (cfg) => ({ ...cfg, mode: "hover" });
 
 /**
  * @description 淡入淡出步骤函数
@@ -414,6 +478,7 @@ const spring =
 
 export {
   variants,
+  hover,
   fade,
   scale,
   scaleX,
